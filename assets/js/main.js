@@ -1,25 +1,23 @@
 /*
-	Astral by HTML5 UP
+	Stellar by HTML5 UP
 	html5up.net | @ajlkn
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 */
 
 (function($) {
 
-	var $window = $(window),
+	var	$window = $(window),
 		$body = $('body'),
-		$wrapper = $('#wrapper'),
-		$main = $('#main'),
-		$panels = $main.children('.panel'),
-		$nav = $('#nav'), $nav_links = $nav.children('a');
+		$main = $('#main');
 
 	// Breakpoints.
 		breakpoints({
-			xlarge:  [ '1281px',  '1680px' ],
-			large:   [ '981px',   '1280px' ],
-			medium:  [ '737px',   '980px'  ],
-			small:   [ '361px',   '736px'  ],
-			xsmall:  [ null,      '360px'  ]
+			xlarge:   [ '1281px',  '1680px' ],
+			large:    [ '981px',   '1280px' ],
+			medium:   [ '737px',   '980px'  ],
+			small:    [ '481px',   '736px'  ],
+			xsmall:   [ '361px',   '480px'  ],
+			xxsmall:  [ null,      '360px'  ]
 		});
 
 	// Play initial animations on page load.
@@ -30,183 +28,96 @@
 		});
 
 	// Nav.
-		$nav_links
-			.on('click', function(event) {
+		var $nav = $('#nav');
 
-				var href = $(this).attr('href');
+		if ($nav.length > 0) {
 
-				// Not a panel link? Bail.
-					if (href.charAt(0) != '#'
-					||	$panels.filter(href).length == 0)
-						return;
+			// Shrink effect.
+				$main
+					.scrollex({
+						mode: 'top',
+						enter: function() {
+							$nav.addClass('alt');
+						},
+						leave: function() {
+							$nav.removeClass('alt');
+						},
+					});
 
-				// Prevent default.
-					event.preventDefault();
-					event.stopPropagation();
+			// Links.
+				var $nav_a = $nav.find('a');
 
-				// Change panels.
-					if (window.location.hash != href)
-						window.location.hash = href;
+				$nav_a
+					.scrolly({
+						speed: 1000,
+						offset: function() { return $nav.height(); }
+					})
+					.on('click', function() {
 
-			});
+						var $this = $(this);
 
-	// Panels.
-
-		// Initialize.
-			(function() {
-
-				var $panel, $link;
-
-				// Get panel, link.
-					if (window.location.hash) {
-
-				 		$panel = $panels.filter(window.location.hash);
-						$link = $nav_links.filter('[href="' + window.location.hash + '"]');
-
-					}
-
-				// No panel/link? Default to first.
-					if (!$panel
-					||	$panel.length == 0) {
-
-						$panel = $panels.first();
-						$link = $nav_links.first();
-
-					}
-
-				// Deactivate all panels except this one.
-					$panels.not($panel)
-						.addClass('inactive')
-						.hide();
-
-				// Activate link.
-					$link
-						.addClass('active');
-
-				// Reset scroll.
-					$window.scrollTop(0);
-
-			})();
-
-		// Hashchange event.
-			$window.on('hashchange', function(event) {
-
-				var $panel, $link;
-
-				// Get panel, link.
-					if (window.location.hash) {
-
-				 		$panel = $panels.filter(window.location.hash);
-						$link = $nav_links.filter('[href="' + window.location.hash + '"]');
-
-						// No target panel? Bail.
-							if ($panel.length == 0)
+						// External link? Bail.
+							if ($this.attr('href').charAt(0) != '#')
 								return;
 
-					}
+						// Deactivate all links.
+							$nav_a
+								.removeClass('active')
+								.removeClass('active-locked');
 
-				// No panel/link? Default to first.
-					else {
+						// Activate link *and* lock it (so Scrollex doesn't try to activate other links as we're scrolling to this one's section).
+							$this
+								.addClass('active')
+								.addClass('active-locked');
 
-						$panel = $panels.first();
-						$link = $nav_links.first();
+					})
+					.each(function() {
 
-					}
+						var	$this = $(this),
+							id = $this.attr('href'),
+							$section = $(id);
 
-				// Deactivate all panels.
-					$panels.addClass('inactive');
+						// No section for this link? Bail.
+							if ($section.length < 1)
+								return;
 
-				// Deactivate all links.
-					$nav_links.removeClass('active');
+						// Scrollex.
+							$section.scrollex({
+								mode: 'middle',
+								initialize: function() {
 
-				// Activate target link.
-					$link.addClass('active');
+									// Deactivate section.
+										if (browser.canUse('transition'))
+											$section.addClass('inactive');
 
-				// Set max/min height.
-					$main
-						.css('max-height', $main.height() + 'px')
-						.css('min-height', $main.height() + 'px');
+								},
+								enter: function() {
 
-				// Delay.
-					setTimeout(function() {
+									// Activate section.
+										$section.removeClass('inactive');
 
-						// Hide all panels.
-							$panels.hide();
+									// No locked links? Deactivate all links and activate this section's one.
+										if ($nav_a.filter('.active-locked').length == 0) {
 
-						// Show target panel.
-							$panel.show();
+											$nav_a.removeClass('active');
+											$this.addClass('active');
 
-						// Set new max/min height.
-							$main
-								.css('max-height', $panel.outerHeight() + 'px')
-								.css('min-height', $panel.outerHeight() + 'px');
+										}
 
-						// Reset scroll.
-							$window.scrollTop(0);
+									// Otherwise, if this section's link is the one that's locked, unlock it.
+										else if ($this.hasClass('active-locked'))
+											$this.removeClass('active-locked');
 
-						// Delay.
-							window.setTimeout(function() {
+								}
+							});
 
-								// Activate target panel.
-									$panel.removeClass('inactive');
-
-								// Clear max/min height.
-									$main
-										.css('max-height', '')
-										.css('min-height', '');
-
-								// IE: Refresh.
-									$window.triggerHandler('--refresh');
-
-								// Unlock.
-									locked = false;
-
-							}, (breakpoints.active('small') ? 0 : 500));
-
-					}, 250);
-
-			});
-
-	// IE: Fixes.
-		if (browser.name == 'ie') {
-
-			// Fix min-height/flexbox.
-				$window.on('--refresh', function() {
-
-					$wrapper.css('height', 'auto');
-
-					window.setTimeout(function() {
-
-						var h = $wrapper.height(),
-							wh = $window.height();
-
-						if (h < wh)
-							$wrapper.css('height', '100vh');
-
-					}, 0);
-
-				});
-
-				$window.on('resize load', function() {
-					$window.triggerHandler('--refresh');
-				});
-
-			// Fix intro pic.
-				$('.panel.intro').each(function() {
-
-					var $pic = $(this).children('.pic'),
-						$img = $pic.children('img');
-
-					$pic
-						.css('background-image', 'url(' + $img.attr('src') + ')')
-						.css('background-size', 'cover')
-						.css('background-position', 'center');
-
-					$img
-						.css('visibility', 'hidden');
-
-				});
+					});
 
 		}
+
+	// Scrolly.
+		$('.scrolly').scrolly({
+			speed: 1000
+		});
 
 })(jQuery);
