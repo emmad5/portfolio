@@ -124,6 +124,10 @@ input, select, textarea {
 		color: rgba(255, 255, 255, 0.65);
 	}
 
+	.project {
+		text-align: left;
+	}
+
 	body, input, select, textarea {
 		font-family: "Source Sans Pro", Helvetica, sans-serif;
 		font-size: 17pt;
